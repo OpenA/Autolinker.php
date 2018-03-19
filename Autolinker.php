@@ -269,7 +269,7 @@ class Autolinker {
 		// Handle a custom `replaceFn` being provided
 		$replaceFnResult;
 		if( !!$this->replaceFn ) {
-			$replaceFnResult = $this->replaceFn( $match );  // Autolinker instance is the context
+			$replaceFnResult = call_user_func($this->replaceFn, $match);  // Autolinker instance is the context
 		}
 		if( gettype($replaceFnResult) === 'string' ) {
 			return $replaceFnResult;  // `replaceFn` returned a string, use that
