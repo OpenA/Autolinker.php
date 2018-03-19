@@ -11,7 +11,7 @@ class Util {
 	 *
 	 * A function object which represents an abstract method.
 	 */
-	public function abstractMethod() { throw new Exception("abstract"); }
+	function abstractMethod() { throw new Exception("abstract"); }
 	
 	/**
 	 * @private
@@ -29,7 +29,7 @@ class Util {
 	 * @param {Object} src The source object.
 	 * @return {Object} The destination object (`dest`)
 	 */
-	public function assign( $dest, $src ) {
+	function assign( $dest, $src ) {
 		foreach ($src as $prop => $value) {
 			if ( array_key_exists( $prop, $src )) {
 				$dest->{$prop} = $value;
@@ -46,7 +46,7 @@ class Util {
 	 * @param {Object} src The source object.
 	 * @return {Object} The destination object (`dest`)
 	 */
-	public function defaults( $dest, $src ) {
+	function defaults( $dest, $src ) {
 		foreach ($src as $prop => $value) {
 			if ( array_key_exists( $prop, $src ) && $dest[$prop] === null ) {
 				$dest[$prop] = $value;
@@ -69,7 +69,7 @@ class Util {
 	 *   remove an element.
 	 * @return {Array} The mutated input `arr`.
 	 */
-	public function remove(array $arr, $fn) {
+	function remove(array $arr, $fn) {
 		for ($i = count($arr) - 1; $i >= 0; $i--) {
 			if ($fn($arr[$i]) === true) {
 				array_splice($arr, $i, 1);
@@ -83,7 +83,7 @@ class Util {
 	 * @param {String} str The string to trim.
 	 * @return {String}
 	 */
-	static function trim(string $str) {
+	function trim(string $str) {
 		return str_replace(static::$trimRegex, '', $str);
 	}
 };
@@ -132,48 +132,6 @@ function splitAndCapture($str, $splitRegex) {
 	array_push($result, substr($str, $lastIdx));
 	
 	return $result;
-}
-
-/**
- * A truncation feature where the ellipsis will be placed at the end of the URL.
- *
- * @param {String} anchorText
- * @param {Number} truncateLen The maximum length of the truncated output URL string.
- * @param {String} ellipsisChars The characters to place within the url, e.g. "..".
- * @return {String} The truncated URL.
- */
-function normalizeUrlsCfg( $urls = true ) { // default to `true`
-	if ( gettype($urls) === 'boolean' ) {
-		return Array( 'schemeMatches' => $urls, 'wwwMatches' => $urls, 'tldMatches' => $urls );
-	} else {  // object form
-		return Array(
-			'schemeMatches' => (gettype($urls['schemeMatches']) === 'boolean' ? $urls['schemeMatches'] : true),
-			'wwwMatches'    => (gettype($urls['wwwMatches'])    === 'boolean' ? $urls['wwwMatches']    : true),
-			'tldMatches'    => (gettype($urls['tldMatches'])    === 'boolean' ? $urls['tldMatches']    : true)
-		);
-	}
-}
-
-function normalizeStripPrefixCfg( $stripPrefix = true ) { // default to `true`
-	if ( gettype($stripPrefix) === 'boolean' ) {
-		return Array( 'scheme' => $stripPrefix, 'www' => $stripPrefix);
-	} else {  // object form
-		return Array(
-			'scheme' => (gettype($stripPrefix['scheme']) === 'boolean' ? $stripPrefix['scheme'] : true),
-			'www'    => (gettype($stripPrefix['www'])    === 'boolean' ? $stripPrefix['www']    : true)
-		);
-	}
-}
-
-function normalizeTruncateCfg( $truncate ) {
-	if ( gettype($truncate) === 'number' ) {
-		return Array( 'length' => $truncate, 'location' => 'end' );
-	} else {  // object, or undefined/null
-		return Util::defaults( (!$truncate ? [] : $truncate), Array(
-			'length'   =>  INF,
-			'location' => 'end'
-		));
-	}
 }
 
 /**

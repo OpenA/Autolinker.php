@@ -9,7 +9,7 @@
  * Note that Matchers do not take HTML into account - they must be fed the text
  * nodes of any HTML string, which is handled by {@link Autolinker#parse}.
  */
-class Matcher {
+class Matcher extends Util {
 
 	/**
 	 * @cfg {Autolinker.AnchorTagBuilder} tagBuilder (required)
@@ -38,8 +38,8 @@ class Matcher {
 	 * @param {String} text The text to scan and replace matches in.
 	 * @return {Match[]}
 	 */
-	function parseMatches() {
-		Util::abstractMethod();
+	function parseMatches( $text ) {
+		parent::abstractMethod();
 	}
 }
 

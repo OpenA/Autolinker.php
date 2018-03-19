@@ -27,8 +27,7 @@ include 'htmlParser/CommentNode.php';
 include 'htmlParser/EntityNode.php';
 include 'htmlParser/TextNode.php';
 
-
-class Autolinker {
+class Autolinker extends Util {
 	
 	static $version = '1.6.2';
 	
@@ -43,13 +42,13 @@ class Autolinker {
 		
 	function __construct($cfg = []) {
 		
-		$this->urls = normalizeUrlsCfg( $cfg['urls'] );
+		$this->urls = $this->normalizeUrlsCfg( $cfg['urls'] );
 		$this->email = gettype($cfg['email']) === 'boolean' ? $cfg['email'] : true;
 		$this->phone = gettype($cfg['phone']) === 'boolean' ? $cfg['phone'] : true;
 		$this->hashtag = $cfg['hashtag'] || false;
 		$this->mention = $cfg['mention'] || false;
 		$this->newWindow = gettype($cfg['newWindow']) === 'boolean' ? $cfg['newWindow'] : true;
-		$this->stripPrefix = normalizeStripPrefixCfg( $cfg['stripPrefix'] );
+		$this->stripPrefix = $this->normalizeStripPrefixCfg( $cfg['stripPrefix'] );
 		$this->stripTrailingSlash = gettype($cfg['stripTrailingSlash']) === 'boolean' ? $cfg['stripTrailingSlash'] : true;
 		$this->decodePercentEncoding = gettype($cfg['decodePercentEncoding']) === 'boolean' ? $cfg['decodePercentEncoding'] : true;
 		
@@ -65,7 +64,7 @@ class Autolinker {
 			throw new Exception( "invalid `hashtag` cfg - see docs" );
 		}
 		
-		$this->truncate  = normalizeTruncateCfg( $cfg['truncate'] );
+		$this->truncate  = $this->normalizeTruncateCfg( $cfg['truncate'] );
 		$this->className = !$cfg['className'] ? ''    : $cfg['className'];
 		$this->replaceFn = !$cfg['replaceFn'] ? null  : $cfg['replaceFn'];
 		$this->context   = !$cfg['context']   ? $this : $cfg['context'];
@@ -158,18 +157,18 @@ class Autolinker {
 	 */
 	function removeUnwantedMatches( $matches ) {
 		
-		if( !$this->hashtag ) Util::remove( $matches, function( $match ) { return $match->getType() === 'hashtag'; } );
-		if( !$this->email )   Util::remove( $matches, function( $match ) { return $match->getType() === 'email'; } );
-		if( !$this->phone )   Util::remove( $matches, function( $match ) { return $match->getType() === 'phone'; } );
-		if( !$this->mention ) Util::remove( $matches, function( $match ) { return $match->getType() === 'mention'; } );
+		if( !$this->hashtag ) parent::remove( $matches, function( $match ) { return $match->getType() === 'hashtag'; } );
+		if( !$this->email )   parent::remove( $matches, function( $match ) { return $match->getType() === 'email'; } );
+		if( !$this->phone )   parent::remove( $matches, function( $match ) { return $match->getType() === 'phone'; } );
+		if( !$this->mention ) parent::remove( $matches, function( $match ) { return $match->getType() === 'mention'; } );
 		if( !$this->urls['schemeMatches'] ) {
-			Util::remove( $matches, function( $m ) { return $m->getType() === 'url' && $m->getUrlMatchType() === 'scheme'; } );
+			parent::remove( $matches, function( $m ) { return $m->getType() === 'url' && $m->getUrlMatchType() === 'scheme'; } );
 		}
 		if( !$this->urls['wwwMatches'] ) {
-			Util::remove( $matches, function( $m ) { return $m->getType() === 'url' && $m->getUrlMatchType() === 'www'; } );
+			parent::remove( $matches, function( $m ) { return $m->getType() === 'url' && $m->getUrlMatchType() === 'www'; } );
 		}
 		if( !$this->urls['tldMatches'] ) {
-			Util::remove( $matches, function( $m ) { return $m->getType() === 'url' && $m->getUrlMatchType() === 'tld'; } );
+			parent::remove( $matches, function( $m ) { return $m->getType() === 'url' && $m->getUrlMatchType() === 'tld'; } );
 		}
 		return $matches;
 	}
@@ -361,6 +360,48 @@ class Autolinker {
 			]);
 		}
 		return $tagBuilder;
+	}
+	
+	/**
+	 * A truncation feature where the ellipsis will be placed at the end of the URL.
+	 *
+	 * @param {String} anchorText
+	 * @param {Number} truncateLen The maximum length of the truncated output URL string.
+	 * @param {String} ellipsisChars The characters to place within the url, e.g. "..".
+	 * @return {String} The truncated URL.
+	 */
+	function normalizeUrlsCfg( $urls = true ) { // default to `true`
+		if ( gettype($urls) === 'boolean' ) {
+			return Array( 'schemeMatches' => $urls, 'wwwMatches' => $urls, 'tldMatches' => $urls );
+		} else {  // object form
+			return Array(
+				'schemeMatches' => (gettype($urls['schemeMatches']) === 'boolean' ? $urls['schemeMatches'] : true),
+				'wwwMatches'    => (gettype($urls['wwwMatches'])    === 'boolean' ? $urls['wwwMatches']    : true),
+				'tldMatches'    => (gettype($urls['tldMatches'])    === 'boolean' ? $urls['tldMatches']    : true)
+			);
+		}
+	}
+
+	function normalizeStripPrefixCfg( $stripPrefix = true ) { // default to `true`
+		if ( gettype($stripPrefix) === 'boolean' ) {
+			return Array( 'scheme' => $stripPrefix, 'www' => $stripPrefix);
+		} else {  // object form
+			return Array(
+				'scheme' => (gettype($stripPrefix['scheme']) === 'boolean' ? $stripPrefix['scheme'] : true),
+				'www'    => (gettype($stripPrefix['www'])    === 'boolean' ? $stripPrefix['www']    : true)
+			);
+		}
+	}
+
+	function normalizeTruncateCfg( $truncate ) {
+		if ( gettype($truncate) === 'number' ) {
+			return Array( 'length' => $truncate, 'location' => 'end' );
+		} else {  // object, or undefined/null
+			return parent::defaults( (!$truncate ? [] : $truncate), Array(
+				'length'   =>  INF,
+				'location' => 'end'
+			));
+		}
 	}
 	
 	static function quickLink($textOrHtml, $options = []) {

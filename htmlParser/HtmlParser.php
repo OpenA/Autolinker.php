@@ -9,7 +9,7 @@
  * Autolinker uses this to only link URLs/emails/mentions within text nodes, effectively ignoring / "walking
  * around" HTML tags.
 */
-class HtmlParser {
+class HtmlParser extends Util {
 
 	/**
 	 * @private
@@ -154,7 +154,7 @@ class HtmlParser {
 		return new CommentNode([
 			'offset'  => $offset,
 			'text'    => $tagText,
-			'comment' => Util::trim( $commentText )
+			'comment' => parent::trim( $commentText )
 		]);
 	}
 

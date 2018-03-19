@@ -18,7 +18,7 @@
  *    common ones such as &amp;quot; and &amp;nbsp;
  */
 
-class HtmlNode {
+class HtmlNode extends Util {
 
 	/**
 	 * @cfg {Number} offset (required)
@@ -49,7 +49,7 @@ class HtmlNode {
 	 * specified in an Object (map).
 	 */
 	function __construct( $cfg ) {
-		Util::assign( $this, $cfg );
+		parent::assign( $this, $cfg );
 		
 		// @if DEBUG
 		if( $this->offset === null ) throw new Exception( '`offset` cfg required' );
@@ -64,7 +64,7 @@ class HtmlNode {
 	 * @return {String}
 	 */
 	function getType() {
-		Util::abstractMethod();
+		parent::abstractMethod();
 	}
 	
 	/**

@@ -30,7 +30,7 @@
  *
  * See the {@link Autolinker} class for more details on using the {@link Autolinker#replaceFn replaceFn}.
  */
-class Match {
+class Match extends Util {
 
 	/**
 	 * @cfg {Autolinker.AnchorTagBuilder} tagBuilder (required)
@@ -77,7 +77,7 @@ class Match {
 	 * @abstract
 	 * @return {String}
 	 */
-	function getType() { Util::abstractMethod(); }
+	function getType() { parent::abstractMethod(); }
 	
 	/**
 	 * Returns the original text that was matched.
@@ -121,7 +121,7 @@ class Match {
 	 * @abstract
 	 * @return {String}
 	 */
-	function getAnchorHref() { Util::abstractMethod(); }
+	function getAnchorHref() { parent::abstractMethod(); }
 	
 	/**
 	 * Returns the anchor text that should be generated for the match.
@@ -129,7 +129,7 @@ class Match {
 	 * @abstract
 	 * @return {String}
 	 */
-	function getAnchorText() { Util::abstractMethod(); }
+	function getAnchorText() { parent::abstractMethod(); }
 	
 	/**
 	 * Returns the CSS class suffix(es) for this match.

@@ -74,7 +74,7 @@
  *     // generated html:
  *     //   Test <button title="Load URL: http://google.com">Load URL: google.com</button>
  */
-class HtmlTag {
+class HtmlTag extends Util {
 
 	/**
 	 * @cfg {String} tagName
@@ -113,7 +113,7 @@ class HtmlTag {
 	 * @param {Object} [cfg] The configuration properties for this class, in an Object (map)
 	 */
 	function __construct( $cfg ) {
-		Util::assign( $this, $cfg );
+		parent::assign( $this, $cfg );
 	}
 	
 	/**
@@ -165,7 +165,7 @@ class HtmlTag {
 	 * @return {Autolinker.HtmlTag} This HtmlTag instance, so that method calls may be chained.
 	 */
 	function setAttrs( $attrs ) {
-		Util::assign( $this->attrs, $attrs );
+		parent::assign( $this->attrs, $attrs );
 		return $this;
 	}
 	
