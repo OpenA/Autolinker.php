@@ -73,7 +73,7 @@ class HtmlNode extends Util {
 	 *
 	 * @return {Number}
 	 */
-	function getOffset() {
+	public function getOffset() {
 		return $this->offset;
 	}
 
@@ -82,7 +82,7 @@ class HtmlNode extends Util {
 	 *
 	 * @return {String}
 	 */
-	function getText() {
+	public function getText() {
 		return $this->text;
 	}
 };

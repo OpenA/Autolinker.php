@@ -111,7 +111,7 @@ class Match extends Util {
 	 *
 	 * @return {Number}
 	 */
-	function getOffset() {
+	public function getOffset() {
 		return $this->offset;
 	}
 
