@@ -1,8 +1,5 @@
 <?php
 /**
- * @class Hashtag
- * @extends Match
- *
  * Represents a Hashtag match found in an input string which should be
  * Autolinked.
  *
@@ -17,31 +14,27 @@ class Hashtag extends Match {
 	 * The service to point hashtag matches to. See {@link Autolinker#hashtag}
 	 * for available values.
 	 */
-	private $serviceName;
+	protected $serviceName;
 
 	/**
 	 * @cfg {String} hashtag (required)
 	 *
 	 * The Hashtag that was matched, without the '#'.
 	 */
-	private $hashtag;
+	protected $hashtag;
 
 	/**
-	 * @constructor
 	 * @param {Object} cfg The configuration properties for the Match
 	 *   instance, specified in an Object (map).
 	 */
 	function __construct( $cfg ) {
 		parent::__construct( $cfg );
-		//Autolinker.match.Match.prototype.constructor.call( this, cfg );
+		
+		$this->assign( $cfg );
 		
 		// @if DEBUG
-		// TODO: if( !serviceName ) throw new Exception( '`serviceName` cfg required' );
-		if( !$cfg['hashtag'] ) throw new Exception( '`hashtag` cfg required' );
+		$this->requireStrict(/*TODO: 'serviceName',*/ 'hashtag');
 		// @endif
-		
-		$this->serviceName = $cfg['serviceName'];
-		$this->hashtag = $cfg['hashtag'];
 	}
 
 	/**
@@ -102,5 +95,3 @@ class Hashtag extends Match {
 		return '#'. $this->hashtag;
 	}
 };
-
-?>

@@ -1,8 +1,5 @@
 <?php
 /**
- * @class Phone
- * @extends Match
- *
  * Represents a Phone number match found in an input string which should be
  * Autolinked.
  *
@@ -12,17 +9,15 @@
 class Phone extends Match {
 
 	/**
-	 * @protected
 	 * @property {String} number (required)
 	 *
 	 * The phone number that was matched, without any delimiter characters.
 	 *
 	 * Note: This is a string to allow for prefixed 0's.
 	 */
-	var $number;
-	
+	protected $number;
+
 	/**
-	 * @protected
 	 * @property  {Boolean} plusSign (required)
 	 *
 	 * `true` if the matched phone number started with a '+' sign. We'll include
@@ -30,25 +25,22 @@ class Phone extends Match {
 	 *
 	 * Ex: '+1 (123) 456 7879'
 	 */
-	var $plusSign;
+	protected $plusSign;
 
 	/**
-	 * @constructor
 	 * @param {Object} cfg The configuration properties for the Match
 	 *   instance, specified in an Object (map).
 	 */
 	function __construct( $cfg ) {
 		parent::__construct( $cfg );
 		
-		// @if DEBUG
-		if( !$cfg['number'] ) throw new Exception( '`number` cfg required' );
-		if( $cfg['plusSign'] == null ) throw new Exception( '`plusSign` cfg required' );
-		// @endif
+		$this->assign( $cfg );
 		
-		$this->number = $cfg['number'];
-		$this->plusSign = $cfg['plusSign'];
+		// @if DEBUG
+		$this->requireStrict('number', 'plusSign');
+		// @endif
 	}
-	
+
 	/**
 	 * Returns a string name for the type of match that this class represents.
 	 *
@@ -57,7 +49,7 @@ class Phone extends Match {
 	function getType() {
 		return 'phone';
 	}
-	
+
 	/**
 	 * Returns the phone number that was matched as a string, without any
 	 * delimiter characters.
@@ -69,7 +61,7 @@ class Phone extends Match {
 	function getNumber() {
 		return $this->number;
 	}
-	
+
 	/**
 	 * Returns the anchor href that should be generated for the match.
 	 *
@@ -78,7 +70,7 @@ class Phone extends Match {
 	 function getAnchorHref() {
 		return 'tel:'. ( $this->plusSign ? '+' : '' ) . $this->number;
 	}
-	
+
 	/**
 	 * Returns the anchor text that should be generated for the match.
 	 *
@@ -88,5 +80,3 @@ class Phone extends Match {
 		return $this->matchedText;
 	}
 };
-
-?>

@@ -1,8 +1,5 @@
 <?php
 /**
- * @class Autolinker.htmlParser.CommentNode
- * @extends Autolinker.htmlParser.HtmlNode
- *
  * Represents an HTML comment node that has been parsed by the
  * {@link HtmlParser}.
  *
@@ -18,7 +15,7 @@ class CommentNode extends HtmlNode {
 	 * The text inside the comment tag. This text is stripped of any leading or
 	 * trailing whitespace.
 	 */
-	var $comment = '';
+	protected $comment = '';
 
 	/**
 	 * Returns a string name for the type of node that this class represents.
@@ -38,5 +35,3 @@ class CommentNode extends HtmlNode {
 		return $this->comment;
 	}
 };
-
-?>

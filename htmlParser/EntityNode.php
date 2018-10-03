@@ -1,9 +1,5 @@
 <?php
-/*global Autolinker */
 /**
- * @class Autolinker.htmlParser.EntityNode
- * @extends Autolinker.htmlParser.HtmlNode
- *
  * Represents a known HTML entity node that has been parsed by the {@link HtmlParser}.
  * Ex: '&amp;nbsp;', or '&amp#160;' (which will be retrievable from the {@link #getText}
  * method.
@@ -14,7 +10,6 @@
  * See this class's superclass ({@link HtmlNode}) for more
  * details.
  */
-
 class EntityNode extends HtmlNode {
 
 	/**
@@ -26,4 +21,3 @@ class EntityNode extends HtmlNode {
 		return 'entity';
 	}
 };
-?>

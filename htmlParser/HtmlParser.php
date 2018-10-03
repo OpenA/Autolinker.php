@@ -1,18 +1,14 @@
 <?php
 /**
- * @class HtmlParser
- * @extends Object
- *
  * An HTML parser implementation which simply walks an HTML string and returns an array of
  * {@link HtmlNodes} that represent the basic HTML structure of the input string.
  *
  * Autolinker uses this to only link URLs/emails/mentions within text nodes, effectively ignoring / "walking
  * around" HTML tags.
 */
-class HtmlParser extends Util {
+class HtmlParser {
 
 	/**
-	 * @private
 	 * @property {RegExp} htmlRegex
 	 *
 	 * The regular expression used to pull out HTML tags from a string. Handles namespaced HTML tags and
@@ -27,18 +23,25 @@ class HtmlParser extends Util {
 	 * 4. The tag name for a tag without attributes (other than the &lt;!DOCTYPE&gt; tag)
 	 * 5. The tag name for a tag with attributes (other than the &lt;!DOCTYPE&gt; tag)
 	 */
-	static $htmlRegex = '/(?:<(!DOCTYPE)(?:\s+(?:(?=([^\s"\'>\/=\x00-\x1F\x7F]+))\2(?:\s*?=\s*?(?:"[^"]*?"|\'[^\']*?\'|[^\'"=<>`\s]+))?|(?:"[^"]*?"|\'[^\']*?\'|[^\'"=<>`\s]+)))*>)|(?:<(\/)?(?:!--([\s\S]+?)--|(?:([0-9a-zA-Z][0-9a-zA-Z:]*)\s*\/?)|(?:([0-9a-zA-Z][0-9a-zA-Z:]*)\s+(?:(?:\s+|\b)(?=([^\s"\'>\/=\x00-\x1F\x7F]+))\7(?:\s*?=\s*?(?:"[^"]*?"|\'[^\']*?\'|[^\'"=<>`\s]+))?)*\s*\/?))>)/i';
+	private static $htmlRegex = '/(?:<(!DOCTYPE)(?:\s+(?:(?=([^\s"\'>\/=\x00-\x1F\x7F]+))\2(?:\s*?=\s*?(?:"[^"]*?"|\'[^\']*?\'|[^\'"=<>`\s]+))?|(?:"[^"]*?"|\'[^\']*?\'|[^\'"=<>`\s]+)))*>)|(?:<(\/)?(?:!--([\s\S]+?)--|(?:([0-9a-zA-Z][0-9a-zA-Z:]*)\s*\/?)|(?:([0-9a-zA-Z][0-9a-zA-Z:]*)\s+(?:(?:\s+|\b)(?=([^\s"\'>\/=\x00-\x1F\x7F]+))\7(?:\s*?=\s*?(?:"[^"]*?"|\'[^\']*?\'|[^\'"=<>`\s]+))?)*\s*\/?))>)/i';
 
 	/**
-	 * @private
 	 * @property {RegExp} htmlCharacterEntitiesRegex
 	 *
 	 * The regular expression that matches common HTML character entities.
 	 *
 	 * Ignoring &amp; as it could be part of a query string -- handling it separately.
 	 */
-	static $htmlCharacterEntitiesRegex = '/(&nbsp;|&#160;|&lt;|&#60;|&gt;|&#62;|&quot;|&#34;|&#39;)/i'; //global inline
-	
+	private static $htmlCharacterEntitiesRegex = '/(&nbsp;|&#160;|&lt;|&#60;|&gt;|&#62;|&quot;|&#34;|&#39;)/i';
+
+	/**
+	 * @property {RegExp} trimRegex
+	 *
+	 * The regular expression used to trim the leading and trailing whitespace
+	 * from a string.
+	 */
+	private static $trimRegex = '/^[\s\x{FEFF}\xA0]+|[\s\x{FEFF}\xA0]+$/u';
+
 	/**
 	 * Parses an HTML string and returns a simple array of {@link HtmlNodes}
 	 * to represent the HTML structure of the input string.
@@ -51,18 +54,18 @@ class HtmlParser extends Util {
 		$textAndEntityNodes;
 		$nodes = [];  // will be the result of the method
 		
-		if ( ($len = preg_match_all( static::$htmlRegex, $html, $currentResult )) ) {
+		if ( ($len = preg_match_all( self::$htmlRegex, $html, $currentResult, PREG_SET_ORDER | PREG_OFFSET_CAPTURE )) ) {
 			
 			for( $i = 0; $i < $len; $i++ ) {
-				$tagText      = $currentResult[ 0 ][ $i ];
-				$tagName      = $currentResult[ 1 ][ $i ];   // The <!DOCTYPE> tag (ex: "!DOCTYPE"), or another tag (ex: "a" or "img")
-				$commentText  = $currentResult[ 4 ][ $i ];
-				$isClosingTag = $currentResult[ 3 ][ $i ];
-				$offset       = strpos($html, $tagText);
+				$tagText      = $currentResult[ $i ][ 0 ][ 0 ];
+				$tagName      = $currentResult[ $i ][ 1 ][ 0 ]; // The <!DOCTYPE> tag (ex: "!DOCTYPE"), or another tag (ex: "a" or "img")
+				$commentText  = $currentResult[ $i ][ 4 ][ 0 ];
+				$isClosingTag = $currentResult[ $i ][ 3 ][ 0 ];
+				$offset       = $currentResult[ $i ][ 0 ][ 1 ];
 				$inBetweenTagsText = substr( $html, $lastIndex, $offset );
 				
 				if( !$tagName ) {
-					 $tagName = !$currentResult[ 5 ][ $i ] ? $currentResult[ 6 ][ $i ] : $currentResult[ 5 ][ $i ];
+					 $tagName = $currentResult[ $i ][ 5 ][ 0 ] ?: $currentResult[ $i ][ 6 ][ 0 ];
 				}
 				
 				// Push TextNodes and EntityNodes for any text found between tags
@@ -72,7 +75,7 @@ class HtmlParser extends Util {
 						array_push( $nodes, $node );
 					}
 				}
-			
+				
 				// Push the CommentNode or ElementNode
 				if( $commentText ) {
 					array_push( $nodes, $this->createCommentNode( $offset, $tagText, $commentText ) );
@@ -105,10 +108,54 @@ class HtmlParser extends Util {
 	}
 
 	/**
+	 * Performs the functionality of what modern browsers do when `String.prototype.split()` is called
+	 * with a regular expression that contains capturing parenthesis.
+	 *
+	 * For example:
+	 *
+	 *     // Modern browsers:
+	 *     "a,b,c".split( /(,)/ );  // --> [ 'a', ',', 'b', ',', 'c' ]
+	 *
+	 *     // Old IE (including IE8):
+	 *     "a,b,c".split( /(,)/ );  // --> [ 'a', 'b', 'c' ]
+	 *
+	 * This method emulates the functionality of modern browsers for the old IE case.
+	 *
+	 * @param {String} str The string to split.
+	 * @param {RegExp} splitRegex The regular expression to split the input `str` on. The splitting
+	 *   character(s) will be spliced into the array, as in the "modern browsers" example in the
+	 *   description of this method.
+	 *   Note #1: the supplied regular expression **must** have the 'g' flag specified.
+	 *   Note #2: for simplicity's sake, the regular expression does not need
+	 *   to contain capturing parenthesis - it will be assumed that any match has them.
+	 * @return {String[]} The split array of strings, with the splitting character(s) included.
+	 */
+	private function splitAndCapture( $str, $lastIdx = 0 ) {
+		
+		$result = [];
+	
+		if ( ($len = preg_match_all( self::$htmlCharacterEntitiesRegex, $str, $match, PREG_SET_ORDER | PREG_OFFSET_CAPTURE )) ) {
+		
+			for( $i = 0; $i < $len; $i++ ) {
+				$matchedText = $match[ $i ][ 0 ][ 0 ];
+				$offset      = $match[ $i ][ 0 ][ 1 ];
+				
+				array_push($result,
+					substr($str, $lastIdx, $offset - $lastIdx),
+					$matchedText
+				);
+				$lastIdx = $offset + strlen($matchedText);
+			}
+		}
+		array_push($result, substr($str, $lastIdx));
+	
+		return $result;
+	}
+
+	/**
 	 * Parses text and HTML entity nodes from a given string. The input string
 	 * should not have any HTML tags (elements) within it.
 	 *
-	 * @private
 	 * @param {Number} offset The offset of the text node match within the
 	 *   original HTML string.
 	 * @param {String} text The string of text to parse. This is from an HTML
@@ -117,15 +164,16 @@ class HtmlParser extends Util {
 	 *   represent the {@link TextNodes} and
 	 *   {@link EntityNodes} found.
 	 */
-	function parseTextAndEntityNodes( $offset, $text ) {
+	private function parseTextAndEntityNodes( $offset, $text ) {
+		// split at HTML entities, but include the HTML entities in the results array
+		$textAndEntityTokens = $this->splitAndCapture( $text, $offset );
 		$nodes = [];
-		$textAndEntityTokens = splitAndCapture( $text, static::$htmlCharacterEntitiesRegex );  // split at HTML entities, but include the HTML entities in the results array
-
+		
 		// Every even numbered token is a TextNode, and every odd numbered token is an EntityNode
 		// For example: an input `text` of "Test &quot;this&quot; today" would turn into the
 		//   `textAndEntityTokens`: [ 'Test ', '&quot;', 'this', '&quot;', ' today' ]
-		for( $i = 0, $len = count($textAndEntityTokens); $i < $len; $i += 2 ) {
-			$textToken = $textAndEntityTokens[ $i ];
+		for( $i = 0; $i < count($textAndEntityTokens); $i += 2 ) {
+			$textToken   = $textAndEntityTokens[ $i ];
 			$entityToken = $textAndEntityTokens[ $i + 1 ];
 			
 			if( $textToken ) {
@@ -143,25 +191,23 @@ class HtmlParser extends Util {
 	/**
 	 * Factory method to create an {@link CommentNode}.
 	 *
-	 * @private
 	 * @param {Number} offset The offset of the match within the original HTML
 	 *   string.
 	 * @param {String} tagText The full text of the tag (comment) that was
 	 *   matched, including its &lt;!-- and --&gt;.
 	 * @param {String} commentText The full text of the comment that was matched.
 	 */
-	function createCommentNode( $offset, $tagText, $commentText ) {
+	private function createCommentNode( $offset, $tagText, $commentText ) {
 		return new CommentNode([
 			'offset'  => $offset,
 			'text'    => $tagText,
-			'comment' => parent::trim( $commentText )
+			'comment' => preg_replace( self::$trimRegex, '', $commentText )
 		]);
 	}
 
 	/**
 	 * Factory method to create an {@link ElementNode}.
 	 *
-	 * @private
 	 * @param {Number} offset The offset of the match within the original HTML
 	 *   string.
 	 * @param {String} tagText The full text of the tag (element) that was
@@ -172,7 +218,7 @@ class HtmlParser extends Util {
 	 *   otherwise.
 	 * @return {Autolinker.htmlParser.ElementNode}
 	 */
-	function createElementNode( $offset, $tagText, $tagName, $isClosingTag ) {
+	private function createElementNode( $offset, $tagText, $tagName, $isClosingTag ) {
 		return new ElementNode([
 			'offset'  => $offset,
 			'text'    => $tagText,
@@ -180,33 +226,29 @@ class HtmlParser extends Util {
 			'closing' => $isClosingTag
 		]);
 	}
-	
+
 	/**
 	 * Factory method to create a {@link EntityNode}.
 	 *
-	 * @private
 	 * @param {Number} offset The offset of the match within the original HTML
 	 *   string.
 	 * @param {String} text The text that was matched for the HTML entity (such
 	 *   as '&amp;nbsp;').
 	 * @return {Autolinker.htmlParser.EntityNode}
 	 */
-	function createEntityNode( $offset, $text ) {
+	private function createEntityNode( $offset, $text ) {
 		return new EntityNode([ 'offset' => $offset, 'text' => $text ]);
 	}
-	
+
 	/**
 	 * Factory method to create a {@link TextNode}.
 	 *
-	 * @private
 	 * @param {Number} offset The offset of the match within the original HTML
 	 *   string.
 	 * @param {String} text The text that was matched.
 	 * @return {Autolinker.htmlParser.TextNode}
 	 */
-	function createTextNode( $offset, $text ) {
+	private function createTextNode( $offset, $text ) {
 		return new TextNode([ 'offset' => $offset, 'text' => $text ]);
 	}
 };
-
-?>

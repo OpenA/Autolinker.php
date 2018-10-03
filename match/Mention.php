@@ -1,45 +1,41 @@
 <?php
 /**
- * @class Mention
- * @extends Match
- *
  * Represents a Mention match found in an input string which should be Autolinked.
  *
  * See this class's superclass ({@link Autolinker.match.Match}) for more details.
  */
-class Mention extends Match {
 
+class Mention extends Match {
+	
 	/**
 	 * @cfg {String} serviceName
 	 *
 	 * The service to point mention matches to. See {@link Autolinker#mention}
 	 * for available values.
 	 */
-	private $serviceName;
+	protected $serviceName;
+	
 	/**
 	 * @cfg {String} mention (required)
 	 *
 	 * The Mention that was matched, without the '@' character.
 	 */
-	private $mention;
-
+	protected $mention;
+	
 	/**
-	 * @constructor
 	 * @param {Object} cfg The configuration properties for the Match
 	 *   instance, specified in an Object (map).
 	 */
 	function __construct( $cfg ) {
 		parent::__construct( $cfg );
 		
-		// @if DEBUG
-		if( !$cfg['serviceName'] ) throw new Exception( '`serviceName` cfg required' );
-		if( !$cfg['mention'] ) throw new Exception( '`mention` cfg required' );
-		// @endif
+		$this->assign( $cfg );
 		
-		$this->mention = $cfg['mention'];
-		$this->serviceName = $cfg['serviceName'];
+		// @if DEBUG
+		$this->requireStrict('mention', 'serviceName');
+		// @endif
 	}
-
+	
 	/**
 	 * Returns the type of match that this class represents.
 	 *
@@ -48,7 +44,7 @@ class Mention extends Match {
 	function getType() {
 		return 'mention';
 	}
-
+	
 	/**
 	 * Returns the mention, without the '@' character.
 	 *
@@ -57,7 +53,7 @@ class Mention extends Match {
 	function getMention() {
 		return $this->mention;
 	}
-
+	
 	/**
 	 * Returns the configured {@link #serviceName} to point the mention to.
 	 * Ex: 'instagram', 'twitter'.
@@ -67,7 +63,7 @@ class Mention extends Match {
 	function getServiceName() {
 		return $this->serviceName;
 	}
-
+	
 	/**
 	 * Returns the anchor href that should be generated for the match.
 	 *
@@ -101,12 +97,11 @@ class Mention extends Match {
 	 * @return {String[]}
 	 */
 	function getCssClassSuffixes() {
-		if( ($serviceName = $this->serviceName) ) {
-			return [ 'mention', $serviceName ];
-		} else {
-			return [ 'mention' ];
+		$cssClassSuffixes = [ $this->getType() ];
+		
+		if( $this->serviceName ) {
+			array_push( $cssClassSuffixes, $this->serviceName );
 		}
+		return $cssClassSuffixes;
 	}
 };
-
-?>

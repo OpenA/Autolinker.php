@@ -1,15 +1,10 @@
 <?php
-/*global Autolinker */
 /**
- * @class Autolinker.htmlParser.ElementNode
- * @extends Autolinker.htmlParser.HtmlNode
- *
  * Represents an HTML element node that has been parsed by the {@link HtmlParser}.
  *
  * See this class's superclass ({@link HtmlNode}) for more
  * details.
  */
-
 class ElementNode extends HtmlNode {
 
 	/**
@@ -17,16 +12,16 @@ class ElementNode extends HtmlNode {
 	 *
 	 * The name of the tag that was matched.
 	 */
-	var $tagName = '';
-	
+	protected $tagName = '';
+
 	/**
 	 * @cfg {Boolean} closing (required)
 	 *
 	 * `true` if the element (tag) is a closing tag, `false` if its an opening
 	 * tag.
 	 */
-	var $closing = false;
-	
+	protected $closing = false;
+
 	/**
 	 * Returns a string name for the type of node that this class represents.
 	 *
@@ -56,5 +51,3 @@ class ElementNode extends HtmlNode {
 		return $this->closing;
 	}
 };
-
-?>

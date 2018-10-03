@@ -1,138 +1,44 @@
 <?php
 /**
- * @class Util
  * @singleton
  *
  * A few utility methods for Autolinker.
  */
-class Util {
-	/**
-	 * @property {Function} abstractMethod
-	 *
-	 * A function object which represents an abstract method.
-	 */
-	function abstractMethod() { throw new Exception("abstract"); }
-	
-	/**
-	 * @private
-	 * @property {RegExp} trimRegex
-	 *
-	 * The regular expression used to trim the leading and trailing whitespace
-	 * from a string.
-	 */
-	static $trimRegex = '/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/';
-	
-	/**
-	 * Assigns (shallow copies) the properties of `src` onto `dest`.
-	 *
-	 * @param {Object} dest The destination object.
-	 * @param {Object} src The source object.
-	 * @return {Object} The destination object (`dest`)
-	 */
-	function assign( $dest, $src ) {
-		foreach ($src as $prop => $value) {
-			if ( array_key_exists( $prop, $src )) {
-				$dest->{$prop} = $value;
-			}
-		}
-		return $dest;
-	}
-	
-	/**
-	 * Assigns (shallow copies) the properties of `src` onto `dest`, if the
-	 * corresponding property on `dest` === `undefined`.
-	 *
-	 * @param {Object} dest The destination object.
-	 * @param {Object} src The source object.
-	 * @return {Object} The destination object (`dest`)
-	 */
-	function defaults( $dest, $src ) {
-		foreach ($src as $prop => $value) {
-			if ( array_key_exists( $prop, $src ) && $dest[$prop] === null ) {
-				$dest[$prop] = $value;
-			}
-		}
-		return $dest;
-	}
+abstract class Util {
 
 	/**
-	 * Removes array elements based on a filtering function. Mutates the input
-	 * array.
+	 * Assigns (shallow copies) class properties with `$cfg`.
 	 *
-	 * Using this instead of the ES5 Array.prototype.filter() function, to allow
-	 * Autolinker compatibility with IE8, and also to prevent creating many new
-	 * arrays in memory for filtering.
-	 *
-	 * @param {Array} arr The array to remove elements from. This array is
-	 *   mutated.
-	 * @param {Function} fn A function which should return `true` to
-	 *   remove an element.
-	 * @return {Array} The mutated input `arr`.
+	 * @param {Array} cfg The named array.
 	 */
-	function remove(array $arr, $fn) {
-		for ($i = count($arr) - 1; $i >= 0; $i--) {
-			if ($fn($arr[$i]) === true) {
-				array_splice($arr, $i, 1);
+	function assign( $cfg ) {
+		$dest = (new ReflectionClass($this))->getProperties(ReflectionProperty::IS_PROTECTED);
+		
+		foreach ($dest as $obj) {
+			$prop = $obj->name;
+			if ( isset( $cfg[ $prop ] )) {
+				$this->{ $prop } = $cfg[ $prop ];
 			}
 		}
 	}
 
 	/**
-	 * Trims the leading and trailing whitespace from a string.
+	 * Check class require properties.
 	 *
-	 * @param {String} str The string to trim.
-	 * @return {String}
+	 * @param {String} args property names.
 	 */
-	function trim(string $str) {
-		return str_replace(static::$trimRegex, '', $str);
+	function requireStrict( /* ... */ ) {
+		$params = [];
+		foreach (func_get_args() as $name) {
+			if ($this->{ $name } === null) {
+				array_push($params, "`$name`");
+			}
+		}
+		if (count($params)) {
+			throw new Exception( join(', ', $params) .' cfg required' );
+		}
 	}
 };
-
-/**
- * Performs the functionality of what modern browsers do when `String.prototype.split()` is called
- * with a regular expression that contains capturing parenthesis.
- *
- * For example:
- *
- *     // Modern browsers:
- *     "a,b,c".split( /(,)/ );  // --> [ 'a', ',', 'b', ',', 'c' ]
- *
- *     // Old IE (including IE8):
- *     "a,b,c".split( /(,)/ );  // --> [ 'a', 'b', 'c' ]
- *
- * This method emulates the functionality of modern browsers for the old IE case.
- *
- * @param {String} str The string to split.
- * @param {RegExp} splitRegex The regular expression to split the input `str` on. The splitting
- *   character(s) will be spliced into the array, as in the "modern browsers" example in the
- *   description of this method.
- *   Note #1: the supplied regular expression **must** have the 'g' flag specified.
- *   Note #2: for simplicity's sake, the regular expression does not need
- *   to contain capturing parenthesis - it will be assumed that any match has them.
- * @return {String[]} The split array of strings, with the splitting character(s) included.
- */
-function splitAndCapture($str, $splitRegex) {
-	
-	$result  = [];
-	$lastIdx = 0;
-	
-	if ( ($len = preg_match_all( $splitRegex, $str, $match )) ) {
-		
-		for( $i = 0; $i < $len; $i++ ) {
-			$matchedText = $match[ 0 ][ $i ];
-			$index       = strpos($str, $matchedText);
-			
-			array_push($result,
-				substr($str, $lastIdx, $index),
-				$matchedText
-			);
-			$lastIdx = $index + strlen($matchedText);
-		}
-	}
-	array_push($result, substr($str, $lastIdx));
-	
-	return $result;
-}
 
 /**
  * Truncates the `str` at `len - ellipsisChars.length`, and adds the `ellipsisChars` to the
@@ -350,5 +256,3 @@ function TruncateSmart($url, $truncateLen, $ellipsisChars = false) {
 	}
 	return substr((substr($str, 0, intval(ceil($availableLength / 2 ))) . $ellipsisChars . $end), 0, $availableLength + $ellipsisLengthBeforeParsing);
 };
-
-?>

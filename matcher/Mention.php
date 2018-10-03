@@ -1,8 +1,5 @@
 <?php
 /**
- * @class MentionMatch
- * @extends Matcher
- *
  * Matcher to find/replace username matches in an input string.
  */
 class MentionMatch extends Matcher {
@@ -12,7 +9,6 @@ class MentionMatch extends Matcher {
 	 *
 	 *     @asdf
 	 *
-	 * @static
 	 * @property {Object} matcherRegexes
 	 */
 	static $matcherRegexes;
@@ -23,19 +19,16 @@ class MentionMatch extends Matcher {
 	 *
 	 * For example, the string "asdf@asdf.com" should not match "@asdf" as a username.
 	 *
-	 * @static
 	 * @property {RegExp} nonWordCharRegex
 	 */
 	static $nonWordCharRegex;
 
 	/**
-	 * @constructor
 	 * @param {Object} cfg The configuration properties for the Match instance,
 	 *   specified in an Object (map).
 	 */
 	function __construct( $cfg ) {
 		parent::__construct( $cfg );
-		//Autolinker.matcher.Matcher.prototype.constructor.call( this, cfg );
 		
 		$this->serviceName = $cfg['serviceName'];
 	}
@@ -53,18 +46,18 @@ class MentionMatch extends Matcher {
 			return $matches;
 		}
 		
-		if( ($len = preg_match_all($matcherRegex, $text, $match)) ) {
+		if( ($len = preg_match_all($matcherRegex, $text, $match, PREG_SET_ORDER | PREG_OFFSET_CAPTURE)) ) {
 			
 			for( $i = 0; $i < $len; $i++ ) {
-				$matchedText = $match[ 0 ][ $i ];
-				$offset = strpos($text, $matchedText);
+				$matchedText = $match[ $i ][ 0 ][ 0 ];
+				$offset      = $match[ $i ][ 0 ][ 1 ];
 				
 				// If we found the match at the beginning of the string, or we found the match
 				// and there is a whitespace char in front of it (meaning it is not an email
 				// address), then it is a username match.
 				if( $offset === 0 || preg_match( $nonWordCharRegex, $text{$offset - 1} )) {
 					$matchedText = preg_replace('/\.+$/', '', $matchedText); // strip off trailing .
-					$mention = substr( $matchedText, 1 );  // strip off the '@' character at the beginning
+					$mention     = substr( $matchedText, 1 );  // strip off the '@' character at the beginning
 					
 					array_push($matches, new Mention( Array(
 						'tagBuilder'  => $tagBuilder,
@@ -80,10 +73,8 @@ class MentionMatch extends Matcher {
 	}
 };
 
-MentionMatch::$nonWordCharRegex = '/[^'. RegexLib::$alphaNumericCharsStr .']/';
+MentionMatch::$nonWordCharRegex = '/[^'. RegexLib::$alphaNumericCharsStr .']/u';
 MentionMatch::$matcherRegexes   = [
-	'twitter'   => '/@[_' . RegexLib::$alphaNumericCharsStr .']{1,20}/',
-	'instagram' => '/@[_.'. RegexLib::$alphaNumericCharsStr .']{1,50}/'
+	'twitter'   => '/@[_' . RegexLib::$alphaNumericCharsStr .']{1,20}/u',
+	'instagram' => '/@[_.'. RegexLib::$alphaNumericCharsStr .']{1,50}/u'
 ];
-
-?>

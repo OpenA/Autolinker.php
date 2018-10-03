@@ -1,8 +1,5 @@
 <?php
 /**
- * @abstract
- * @class Match
- *
  * Represents a match found in an input string which should be Autolinked. A Match object is what is provided in a
  * {@link Autolinker#replaceFn replaceFn}, and may be used to query for details about the match.
  *
@@ -30,7 +27,7 @@
  *
  * See the {@link Autolinker} class for more details on using the {@link Autolinker#replaceFn replaceFn}.
  */
-class Match extends Util {
+abstract class Match extends Util {
 
 	/**
 	 * @cfg {Autolinker.AnchorTagBuilder} tagBuilder (required)
@@ -38,47 +35,41 @@ class Match extends Util {
 	 * Reference to the AnchorTagBuilder instance to use to generate an anchor
 	 * tag for the Match.
 	 */
-	var $tagBuilder;
-	
+	protected $tagBuilder;
+
 	/**
 	 * @cfg {String} matchedText (required)
 	 *
 	 * The original text that was matched by the {@link Matcher}.
 	 */
-	var $matchedText = '';
-	
+	protected $matchedText = '';
+
 	/**
 	 * @cfg {Number} offset (required)
 	 *
 	 * The offset of where the match was made in the input string.
 	 */
-	var $offset = 0;
+	protected $offset = 0;
 
 	/**
-	 * @constructor
 	 * @param {Object} cfg The configuration properties for the Match
 	 *   instance, specified in an Object (map).
 	 */
 	function __construct( $cfg ) {
-		// @if DEBUG
-		if( $cfg['tagBuilder']  === null ) throw new Exception( '`tagBuilder` cfg required' );
-		if( $cfg['matchedText'] === null ) throw new Exception( '`matchedText` cfg required' );
-		if( $cfg['offset']      === null ) throw new Exception( '`offset` cfg required' );
-		// @endif
+		$this->assign( $cfg );
 		
-		$this->tagBuilder  = $cfg['tagBuilder'];
-		$this->matchedText = $cfg['matchedText'];
-		$this->offset      = $cfg['offset'];
+		// @if DEBUG
+		$this->requireStrict('tagBuilder', 'matchedText', 'offset');
+		// @endif
 	}
-	
+
 	/**
 	 * Returns a string name for the type of match that this class represents.
 	 *
-	 * @abstract
 	 * @return {String}
 	 */
-	function getType() { parent::abstractMethod(); }
-	
+	abstract function getType();
+
 	/**
 	 * Returns the original text that was matched.
 	 *
@@ -87,7 +78,7 @@ class Match extends Util {
 	function getMatchedText() {
 		return $this->matchedText;
 	}
-	
+
 	/**
 	 * Sets the {@link #offset} of where the match was made in the input string.
 	 *
@@ -104,33 +95,30 @@ class Match extends Util {
 		$this->offset = $offset;
 	}
 
-
 	/**
 	 * Returns the offset of where the match was made in the input string. This
 	 * is the 0-based index of the match.
 	 *
 	 * @return {Number}
 	 */
-	public function getOffset() {
+	function getOffset() {
 		return $this->offset;
 	}
 
 	/**
 	 * Returns the anchor href that should be generated for the match.
 	 *
-	 * @abstract
 	 * @return {String}
 	 */
-	function getAnchorHref() { parent::abstractMethod(); }
-	
+	abstract function getAnchorHref();
+
 	/**
 	 * Returns the anchor text that should be generated for the match.
 	 *
-	 * @abstract
 	 * @return {String}
 	 */
-	function getAnchorText() { parent::abstractMethod(); }
-	
+	abstract function getAnchorText();
+
 	/**
 	 * Returns the CSS class suffix(es) for this match.
 	 *
@@ -155,7 +143,7 @@ class Match extends Util {
 	function getCssClassSuffixes() {
 		return [ $this->getType() ];
 	}
-	
+
 	/**
 	 * Builds and returns an {@link Autolinker.HtmlTag} instance based on the
 	 * Match.
@@ -175,5 +163,3 @@ class Match extends Util {
 		return $this->tagBuilder->build( $this );
 	}
 };
-
-?>

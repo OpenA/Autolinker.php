@@ -1,8 +1,5 @@
 <?php
 /**
- * @class TextNode
- * @extends HtmlNode
- *
  * Represents a text node that has been parsed by the {@link HtmlParser}.
  *
  * See this class's superclass ({@link HtmlNode}) for more
@@ -20,5 +17,3 @@ class TextNode extends HtmlNode {
 		return 'text';
 	}
 };
-
-?>

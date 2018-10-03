@@ -1,9 +1,5 @@
 <?php
-/*jshint boss:true */
 /**
- * @class HtmlTag
- * @extends Object
- *
  * Represents an HTML tag, which can be used to easily build/modify HTML tags programmatically.
  *
  * Autolinker uses this abstraction to create HTML tags, and then write them out as strings. You may also use
@@ -84,14 +80,15 @@ class HtmlTag extends Util {
 	 * Not required at instantiation time, but should be set using {@link #setTagName} before {@link #toAnchorString}
 	 * is executed.
 	 */
-	var $tagName = '';
+	protected $tagName = '';
+
 	/**
 	 * @cfg {Object.<String, String>} attrs
 	 *
 	 * An key/value Object (map) of attributes to create the tag with. The keys are the attribute names, and the
 	 * values are the attribute values.
 	 */
-	var $attrs;
+	protected $attrs;
 
 	/**
 	 * @cfg {String} $outerHTML
@@ -99,23 +96,22 @@ class HtmlTag extends Util {
 	 * Alias of {@link #innerHtml}, accepted for consistency with the browser DOM api, but prefer the camelCased version
 	 * for acronym names.
 	 */
-	var $innerHtml = '';
+	protected $innerHtml = '';
+
 	/**
-	 * @protected
 	 * @property {RegExp} whitespaceRegex
 	 *
 	 * Regular expression used to match whitespace in a string of CSS classes.
 	 */
-	var $whitespaceRegex = '/\s+/';
+	protected $whitespaceRegex = '/\s+/';
 
 	/**
-	 * @constructor
 	 * @param {Object} [cfg] The configuration properties for this class, in an Object (map)
 	 */
 	function __construct( $cfg ) {
-		parent::assign( $this, $cfg );
+		$this->assign( $cfg );
 	}
-	
+
 	/**
 	 * Sets the tag name that will be used to generate the tag with.
 	 *
@@ -124,9 +120,8 @@ class HtmlTag extends Util {
 	 */
 	function setTagName( $tagName ) {
 		$this->tagName = $tagName;
-		return $this;
 	}
-	
+
 	/**
 	 * Retrieves the tag name.
 	 *
@@ -145,7 +140,6 @@ class HtmlTag extends Util {
 	 */
 	function setAttr( $attrName, $attrValue ) {
 		$this->attrs[ $attrName ] = $attrValue;
-		return $this;
 	}
 
 	/**
@@ -157,7 +151,7 @@ class HtmlTag extends Util {
 	function getAttr( $attrName ) {
 		return $this->attrs[ $attrName ];
 	}
-	
+
 	/**
 	 * Sets one or more attributes on the HtmlTag.
 	 *
@@ -165,10 +159,10 @@ class HtmlTag extends Util {
 	 * @return {Autolinker.HtmlTag} This HtmlTag instance, so that method calls may be chained.
 	 */
 	function setAttrs( $attrs ) {
-		parent::assign( $this->attrs, $attrs );
-		return $this;
+		foreach ($attrs as $attrName => $attrValue)
+			$this->attrs[ $attrName ] = $attrValue;
 	}
-	
+
 	/**
 	 * Retrieves the attributes Object (map) for the HtmlTag.
 	 *
@@ -177,7 +171,7 @@ class HtmlTag extends Util {
 	function getAttrs() {
 		return $this->attrs;
 	}
-	
+
 	/**
 	 * Sets the provided `cssClass`, overwriting any current CSS classes on the HtmlTag.
 	 *
@@ -185,9 +179,9 @@ class HtmlTag extends Util {
 	 * @return {Autolinker.HtmlTag} This HtmlTag instance, so that method calls may be chained.
 	 */
 	function setClass( $cssClass ) {
-		return $this->attrs['class'] = $cssClass;
+		$this->attrs['class'] = $cssClass;
 	}
-	
+
 	/**
 	 * Convenience method to add one or more CSS classes to the HtmlTag. Will not add duplicate CSS classes.
 	 *
@@ -195,19 +189,16 @@ class HtmlTag extends Util {
 	 * @return {Autolinker.HtmlTag} This HtmlTag instance, so that method calls may be chained.
 	 */
 	function addClass( $cssClass ) {
-		$classAttr = $this->getClass();
-		$whitespaceRegex = $this->whitespaceRegex;
-		$classes = ( !$classAttr ) ? [] : preg_split( $whitespaceRegex, $classAttr );
-		$newClasses = preg_split( $whitespaceRegex, $cssClass );
+		$classAttr = $this->attrs[ 'class' ];
+		$classes   = !$classAttr ? [] : preg_split( '/\s+/', $classAttr );
+		$newClasses = preg_split( '/\s+/', $cssClass );
 		
-		for ( $i = 0, $len = count($newClasses); $i < $len; $i++ ) {
-			$newClass = $newClasses[ $i ];
+		foreach ( $newClasses as $newClass) {
 			if( array_search( $newClass, $classes ) === false ) {
 				array_push( $classes, $newClass );
 			}
 		}
 		$this->attrs[ 'class' ] = join( ' ', $classes );
-		return $this;
 	}
 
 	/**
@@ -217,22 +208,19 @@ class HtmlTag extends Util {
 	 * @return {Autolinker.HtmlTag} This HtmlTag instance, so that method calls may be chained.
 	 */
 	function removeClass( $cssClass ) {
-		$classAttr = $this->getClass();
-		$whitespaceRegex = $this->whitespaceRegex;
-		$classes = ( !$classAttr ) ? [] : preg_split( $whitespaceRegex, $classAttr );
-		$removeClasses = preg_split( $whitespaceRegex, $cssClass );
+		$classAttr = $this->attrs[ 'class' ];
+		$classes   = !$classAttr ? [] : preg_split( '/\s+/', $classAttr );
+		$removeClasses = preg_split( '/\s+/', $cssClass );
 		
-		for ( $i = 0, $len = count($removeClasses); $i < $len; $i++ ) {
-			$removeClass = $removeClasses[ $i ];
+		foreach ( $removeClasses as $removeClass) {
 			$idx = array_search( $removeClass, $classes );
 			if( $idx !== false ) {
 				array_splice( $classes, $idx, 1 );
 			}
 		}
 		$this->attrs[ 'class' ] = join( ' ', $classes );
-		return $this;
 	}
-	
+
 	/**
 	 * Convenience method to retrieve the CSS class(es) for the HtmlTag, which will each be separated by spaces when
 	 * there are multiple.
@@ -240,8 +228,7 @@ class HtmlTag extends Util {
 	 * @return {String}
 	 */
 	function getClass() {
-		$clss = $this->attrs[ 'class' ];
-		return $clss == null ? "" : $clss;
+		return $this->attrs[ 'class' ] ?: "";
 	}
 
 	/**
@@ -251,7 +238,7 @@ class HtmlTag extends Util {
 	 * @return {Boolean} `true` if the HtmlTag has the CSS class, `false` otherwise.
 	 */
 	 function hasClass( $cssClass ) {
-		return strpos( ' '. $this->getClass() .' ', ' '. $cssClass .' ') !== false;
+		return strpos( ' '. $this->attrs[ 'class' ] .' ', ' '. $cssClass .' ') !== false;
 	}
 
 	/**
@@ -262,7 +249,6 @@ class HtmlTag extends Util {
 	 */
 	function setInnerHtml( $html ) {
 		$this->innerHtml = $html;
-		return $this;
 	}
 
 	/**
@@ -273,38 +259,34 @@ class HtmlTag extends Util {
 	function getInnerHtml() {
 		return $this->innerHtml;
 	}
-	
+
 	/**
 	 * Override of superclass method used to generate the HTML string for the tag.
 	 *
 	 * @return {String}
 	 */
 	function toAnchorString() {
-		$tagName = $this->tagName;
+		$tagName  = $this->tagName;
 		$attrsStr = $this->buildAttrsStr();
-		$innerHtml = $this->innerHtml;
-		$attrsStr = !$attrsStr ? '' : ' '. $attrsStr;  // prepend a space if there are actually attributes
 		
-		return "<$tagName$attrsStr>$innerHtml</$tagName>";
+		return join('', ['<', $tagName, $attrsStr, '>', $this->innerHtml, '</', $tagName, '>']);
 	}
 
 	/**
 	 * Support method for {@link #toAnchorString}, returns the string space-separated key="value" pairs, used to populate
 	 * the stringified HtmlTag.
 	 *
-	 * @protected
 	 * @return {String} Example return: `attr1="value1" attr2="value2"`
 	 */
-	function buildAttrsStr() {
-		if( !($attrs = $this->attrs) ) return "";  // no `attrs` Object (map) has been set, return empty string
-		
-		$attrsArr = [];
-		
-		foreach($attrs as $prop => $value) {
-			array_push( $attrsArr, $prop .'="'. $value .'"' );
+	protected function buildAttrsStr() {
+		$attrsStr = '';
+		// no `attrs` Object (map) has been set, return empty string
+		if($attrs = $this->attrs) {
+			foreach($attrs as $prop => $value) {
+				// prepend a space if there are actually attributes
+				$attrsStr .= ' '. $prop .'="'. $value .'"';
+			}
 		}
-		return join( ' ', $attrsArr );
+		return $attrsStr;
 	}
 };
-
-?>

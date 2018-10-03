@@ -1,9 +1,5 @@
 <?php
 /**
- * @protected
- * @class AnchorTagBuilder
- * @extends Object
- *
  * Builds anchor (&lt;a&gt;) tags for the Autolinker utility when a match is
  * found.
  *
@@ -25,33 +21,33 @@
  *     // generated html:
  *     //   Test <a href="http://google.com" target="_blank" rel="nofollow">google.com</a>
  */
-class AnchorTagBuilder {
+class AnchorTagBuilder extends Util {
 
 	/**
 	 * @cfg {Boolean} newWindow
 	 * @inheritdoc Autolinker#newWindow
 	 */
-	var $newWindow;
+	protected $newWindow;
+
 	/**
 	 * @cfg {Object} truncate
 	 * @inheritdoc Autolinker#truncate
 	 */
-	var $truncate;
+	protected $truncate;
+
 	/**
 	 * @cfg {String} className
 	 * @inheritdoc Autolinker#className
 	 */
-	var $className;
+	protected $className;
+
 	/**
-	 * @constructor
 	 * @param {Object} [cfg] The configuration options for the AnchorTagBuilder instance, specified in an Object (map).
 	 */
 	function __construct( $cfg = [] ) {
-		$this->newWindow = $cfg['newWindow'];
-		$this->truncate  = $cfg['truncate'];
-		$this->className = $cfg['className'];
+		$this->assign( $cfg );
 	}
-	
+
 	/**
 	 * Generates the actual anchor (&lt;a&gt;) tag to use in place of the
 	 * matched text, via its `match` object.
@@ -67,17 +63,16 @@ class AnchorTagBuilder {
 			'innerHtml' => $this->processAnchorText( $match->getAnchorText() )
 		]);
 	}
-	
+
 	/**
 	 * Creates the Object (map) of the HTML attributes for the anchor (&lt;a&gt;)
 	 *   tag being generated.
 	 *
-	 * @protected
 	 * @param {Autolinker.match.Match} match The Match instance to generate an
 	 *   anchor tag from.
 	 * @return {Object} A key/value Object (map) of the anchor tag's attributes.
 	 */
-	function createAttrs( $match ) {
+	private function createAttrs( $match ) {
 		$attrs = Array(
 			'href' => $match->getAnchorHref()  // we'll always have the `href` attribute
 		);
@@ -110,38 +105,34 @@ class AnchorTagBuilder {
 	 * - "myLink myLink-hashtag"                 // hashtag match
 	 * - "myLink myLink-mention myLink-twitter"  // mention match with Twitter service
 	 *
-	 * @private
 	 * @param {Autolinker.match.Match} match The Match instance to generate an
 	 *   anchor tag from.
 	 * @return {String} The CSS class string for the link. Example return:
 	 *   "myLink myLink-url". If no {@link #className} was configured, returns
 	 *   an empty string.
 	 */
-	function createCssClass( $match ) {
-		$className = $this->className;
-		
-		if( !$className ) {
+	private function createCssClass( $match ) {
+		if( !($className = $this->className) ) {
 			return "";
-		} else {
-			$returnClasses = [ $className ];
-			$cssClassSuffixes = $match->getCssClassSuffixes();
-			for( $i = 0, $len = strlen($cssClassSuffixes); $i < $len; $i++ ) {
-				array_push($returnClasses, $className .'-'. $cssClassSuffixes[ $i ] );
-			}
-			return join(' ', $returnClasses);
 		}
+		
+		$returnClasses = $className;
+		
+		foreach( $match->getCssClassSuffixes() as $cssClassSuffix ) {
+			$returnClasses .= ' '. $className .'-'. $cssClassSuffix;
+		}
+		return $returnClasses;
 	}
-	
+
 	/**
 	 * Processes the `anchorText` by truncating the text according to the
 	 * {@link #truncate} config.
 	 *
-	 * @private
 	 * @param {String} anchorText The anchor tag's text (i.e. what will be
 	 *   displayed).
 	 * @return {String} The processed `anchorText`.
 	 */
-	function processAnchorText( $anchorText ) {
+	private function processAnchorText( $anchorText ) {
 		$anchorText = $this->doTruncate( $anchorText );
 		return $anchorText;
 	}
@@ -152,27 +143,18 @@ class AnchorTagBuilder {
 	 * {@link #truncate} option, the truncation is performed based on the
 	 * `location` property. See {@link #truncate} for details.
 	 *
-	 * @private
 	 * @param {String} anchorText The anchor tag's text (i.e. what will be
 	 *   displayed).
 	 * @return {String} The truncated anchor text.
 	 */
-	function doTruncate( $anchorText ) {
-		$truncate = $this->truncate;
-		if( !$truncate || !$truncate['length'] )
+	private function doTruncate( $anchorText ) {
+		if( !($truncate = $this->truncate) || !$truncate['length'] )
 			return $anchorText;
 		
-		$truncateLength = $truncate['length'];
-		$truncateLocation = $truncate['location'];
-		
-		if( $truncateLocation === 'smart' ) {
-			return TruncateSmart( $anchorText, $truncateLength );
-		} else if( $truncateLocation === 'middle' ) {
-			return TruncateMiddle( $anchorText, $truncateLength );
-		} else {
-			return TruncateEnd( $anchorText, $truncateLength );
-		}
+		return call_user_func(
+			'Truncate'. $truncate['location'],
+			$anchorText,
+			$truncate['length']
+		);
 	}
 };
-
-?>
